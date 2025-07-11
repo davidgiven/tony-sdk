@@ -37,8 +37,8 @@ The actual flash header is structured like this:
   0080+80   ZP RAM
     0080+8  input parameters for the flash routines (i0, i1, i2...)
     008d+4  destination buffer for the flash routines (o0, i1, i2...)
-    0096    screen width
-    0097    screen height
+    0097    screen width
+    0098    screen height
     0099    flash encryption key (just a value which is XORd with each byte...)
     0100+?  input/output parameters for screen routines, plus scratch space?
     017f    top of CPU stack

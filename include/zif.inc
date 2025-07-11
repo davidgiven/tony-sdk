@@ -80,7 +80,7 @@
 
 .macro zendloop
     _zgetframe zloopstack, %zloopsp
-    _zget zloopstack, %ZF, continue, jmp
+    _zget zloopstack, %ZF, continue, bra
     _zset zloopstack, %ZF, break, .
     .set zloopsp, zloopsp - 1
 .endm
@@ -93,7 +93,7 @@
 
 .macro zcontinue
     _zgetframe zloopstack, %zloopsp
-    _zget zloopstack, %ZF, continue, jmp
+    _zget zloopstack, %ZF, continue, bra
 .endm
 
 .macro _zmake_loops pos, neg
@@ -163,7 +163,7 @@ _zmake_if vc, vs
 
 .macro zelse
     _zgetframe zifstack, %zifsp
-    _zget zifstack, %ZF, end, jmp
+    _zget zifstack, %ZF, end, bra
     _zset zifstack, %ZF, false, .
 .endm
     

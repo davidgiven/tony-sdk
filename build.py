@@ -43,6 +43,12 @@ tonyprogram(
         "_init": ["src/_init.S"],
         "_main": ["src/_main.S"],
         "_vwrite": ["src/_vwrite.S"],
+        "init_screen_009106": ["src/init_screen_009106.S"],
+        "init_screen_313021": ["src/init_screen_313021.S"],
+        "init_screen_333023": ["src/init_screen_333023.S"],
+        "init_screen_d48066": ["src/init_screen_d48066.S"],
+        "init_screen_other": ["src/init_screen_other.S"],
+        "init_other": ["src/init_other.S"],
     },
 )
 

@@ -1,5 +1,5 @@
 MEMORY {
-    ram (rw) : ORIGIN = 0x300, LENGTH = 0x18d
+    ram (rw) : ORIGIN = 0x300, LENGTH = 0x200
     image (rw) : ORIGIN = 0, LENGTH = 0x10000
 }
 
@@ -10,11 +10,17 @@ SECTIONS {
     i3 = 0x83;
     i4 = 0x84;
 
+    screen_width = 0x97;
+    screen_height = 0x98;
+
     SYSCALL = 0x6000;
     READFLASH = 0x6003;
     CHUNKJUMP = 0x6052;
     CHUNKCALL = 0x60de;
     
+    LCD_CMD = 0x8000;
+    LCD_DATA = 0xc000;
+
     header : {
         . = 3;
         SHORT(LOADADDR(_init));
