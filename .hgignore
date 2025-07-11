@@ -1,0 +1,5 @@
+syntax: regexp
+^distribution.tar.xz$
+^\.obj/.*$
+/__pycache__/
+
