@@ -24,4 +24,6 @@ while i < len(sys.argv):
     if chunkname.startswith("_"):
         print(")")
     print(f"}}")
+    print(f"{chunkname}_chunk_start = LOADADDR({chunkname});")
+    print(f"{chunkname}_chunk_len = SIZEOF({chunkname});")
     print(f"n = n + SIZEOF({chunkname});")

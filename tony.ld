@@ -4,6 +4,17 @@ MEMORY {
 }
 
 SECTIONS {
+    i0 = 0x80;
+    i1 = 0x81;
+    i2 = 0x82;
+    i3 = 0x83;
+    i4 = 0x84;
+
+    SYSCALL = 0x6000;
+    READFLASH = 0x6003;
+    CHUNKJUMP = 0x6052;
+    CHUNKCALL = 0x60de;
+    
     header : {
         . = 3;
         SHORT(LOADADDR(_init));

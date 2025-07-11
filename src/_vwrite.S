@@ -1,4 +1,8 @@
 #include "tony.inc"
 
 entry:
-    rts
+    lda #0
+    sta 2
+    lda #8
+    sta 2
+    bra entry
