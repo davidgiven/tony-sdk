@@ -1,18 +1,23 @@
 ## Flash structure
 
-The first 64kB of flash is special, and must contain three special routines. Each one is referred to by a descriptor structure:
+The first 64kB of flash is special, and must contain three special routines.
+Each one is referred to by a descriptor structure:
 
 ```
 +0  16-bit flash address of code (the third byte of the flash address is implicitly zero)
 +2  16-bit length of code, in words
+```
 
+The actual flash header is structured like this:
+
+```
 0003+4  16-bit flash descriptor of initialisation routine
 0009+6  encryption 'key' (leave zeroed); unencoded in flash
 000f+4  first four bytes of key; stored normally (leave zeroed)
 0013+4  16-bit flash descriptor of video memory write routine
 001b+4  16-bit flash descriptor of event handler
 001f+2  last two bytes of key; stored normally (leave zeroed)
-0021+2  checks of key (leave zeroed)
+0021+2  checksum of key (leave zeroed)
 0023+4  magic string 'tony'
 ```
 

@@ -5,15 +5,27 @@ MEMORY {
 
 SECTIONS {
     header : {
-        SHORT(0x1234);
-        SHORT(init_entry);
-        SHORT(main_entry);
+        . = 3;
+        SHORT(LOADADDR(_init));
+        SHORT(SIZEOF(_init));
+        ASSERT(LOADADDR(_init) < 0x10000, "_init chunk not in first 64kB of flash");
+        . = 0x13;
+        SHORT(LOADADDR(_vwrite))
+        SHORT(SIZEOF(_vwrite))
+        ASSERT(LOADADDR(_vwrite) < 0x10000, "_vwrite chunk not in first 64kB of flash");
+        . = 0x1b;
+        SHORT(LOADADDR(_main));
+        SHORT(SIZEOF(_main));
+        ASSERT(LOADADDR(_main) < 0x10000, "_main chunk not in first 64kB of flash");
+        . = 0x23;
+        BYTE(116);
+        BYTE(111);
+        BYTE(110);
+        BYTE(121);
     } >image
 
     n = LOADADDR(header) + SIZEOF(header);
-    .init 0x0300 : AT(n) { */init.o(.text) }
-    n = n + SIZEOF(.init);
-    .main 0x0300 : AT(n) { */main.o(.text) }
+    INCLUDE generated-chunks.ld
 }
 
 OUTPUT_FORMAT{
