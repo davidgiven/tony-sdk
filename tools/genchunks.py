@@ -25,5 +25,5 @@ while i < len(sys.argv):
         print(")")
     print(f"}}")
     print(f"{chunkname}_chunk_start = LOADADDR({chunkname});")
-    print(f"{chunkname}_chunk_len = SIZEOF({chunkname});")
+    print(f"{chunkname}_chunk_len = (SIZEOF({chunkname})+1)/2;")
     print(f"n = n + SIZEOF({chunkname});")
