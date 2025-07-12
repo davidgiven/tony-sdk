@@ -12,6 +12,9 @@ The actual flash header is structured like this:
 
 ```
 0003+4  16-bit flash descriptor of initialisation routine
+0007+2  16-bit flash address of default font
+          1bpp, 8x16 wide array of scanlines (i.e. standard font format)
+          starting with character 0x20
 0009+6  encryption 'key' (leave zeroed); unencoded in flash
 000f+4  first four bytes of key; stored normally (leave zeroed)
 0013+4  16-bit flash descriptor of video memory write routine
@@ -62,6 +65,11 @@ The actual flash header is structured like this:
 6000+1fff   ROM
   6000      SYSCALL: graphics library entrypoint
               opcode in X; parameters in 0100...
+              0x26: draw character
+                p0, p1: (X, Y) position
+                p2: ASCII character
+                p3: foreground colour
+                p4: background colour
   6003      READFLASH: reads four bytes of flash
               i2i1i0: source address
               o0..o3: result data

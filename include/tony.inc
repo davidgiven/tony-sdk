@@ -4,6 +4,8 @@
 GPIO1_LCD_BACKLIGHT = 0x02
 GPIO2_CS = 0x08
 
+SYS_DRAW_CHAR = 0x26
+
 .zeropage i0, i1, i2, i3, i4, i5, i6
 .zeropage o0, i1, i2, i3
 .zeropage screen_width, screen_height

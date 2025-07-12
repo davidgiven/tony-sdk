@@ -1,5 +1,5 @@
 MEMORY {
-    ram (rw) : ORIGIN = 0x300, LENGTH = 0x200
+    ram (rw) : ORIGIN = 0x300, LENGTH = 0x800
     image (rw) : ORIGIN = 0, LENGTH = 0x10000
 }
 
@@ -44,10 +44,13 @@ SECTIONS {
     LCD_DATA = 0xc000;
 
     header : {
-        . = 3;
+        . = 0x03;
         SHORT(LOADADDR(_init));
         SHORT(SIZEOF(_init));
         ASSERT(LOADADDR(_init) < 0x10000, "_init chunk not in first 64kB of flash");
+        . = 0x07;
+        SHORT(LOADADDR(_font));
+        ASSERT(LOADADDR(_font) < 0x10000, "_font chunk not in first 64kB of flash");
         . = 0x13;
         SHORT(LOADADDR(_vwrite))
         SHORT(SIZEOF(_vwrite))
