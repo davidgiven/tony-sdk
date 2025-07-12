@@ -25,11 +25,14 @@ The actual flash header is structured like this:
 
 ```
 0000+80     I/O area
-  0002      GPIOs? SPI CS line is in bit 3
+  0001      GPIOs
+              bit 1: LCD backlight
+  0002      GPIOs
+              bit 3: SPI CS line
   0010      SPI r/w register, high byte
   0011      SPI r/w register, low byte
   0013      SPI status register
-  0034      something to do with LCD control
+  0035      something to do with LCD control
   0058+2    DMA source address
   005a+2    DMA dest address
   005c+2    DMA length
@@ -42,6 +45,7 @@ The actual flash header is structured like this:
     0099    flash encryption key (just a value which is XORd with each byte...)
     0100+?  input/output parameters for screen routines, plus scratch space?
     017f    top of CPU stack
+    0180    shadow copy of write-only I/O register 01
     018e    chunk stack pointer
     018f+20 chunk stack (enough space for four nested chunk calls)
     01db    shadow copy of write-only I/O register 00

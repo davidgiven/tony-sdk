@@ -1,5 +1,7 @@
 from build.ab import export, simplerule, filenamesof
 from build.llvm import llvmrawprogram, llvmclibrary
+from build.c import hostcxxprogram
+from build.pkg import package
 
 
 def tonyprogram(
@@ -26,11 +28,14 @@ def tonyprogram(
         name=name,
         srcs=[inner for outer in chunks.values() for inner in outer],
         deps=[f".+{name}_chunkfile", ".+tony_lib"] + deps,
-        cflags=cflags+["-mcpu=mosr65c02"],
+        cflags=cflags + ["-mcpu=mosw65c02"],
         ldflags=ldflags + ["--no-check-sections", "-e0", "-L$[deps[0].dir]"],
         linkscript="./tony.ld",
     )
 
+
+package(name="libfmt", package="fmt")
+hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
 
 llvmclibrary(
     name="tony_lib",
@@ -52,4 +57,10 @@ tonyprogram(
     },
 )
 
-export(name="all", items={"tony.img": ".+romimage"})
+export(
+    name="all",
+    items={
+        "tony.img": ".+romimage",
+        "bin/dechunker": ".+dechunker",
+    },
+)

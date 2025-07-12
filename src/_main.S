@@ -1,8 +1,9 @@
-.text
+#include "tony.inc"
+
 entry:
-    lda 2
-    and #0xf7
-    sta 2
-    ora #8
-    sta 2
-    bra entry
+	;lda shadow_01
+	;ora #0x02
+	;sta shadow_01
+	;sta 0x01
+        
+        bra entry

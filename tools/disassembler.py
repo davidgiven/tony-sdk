@@ -13,6 +13,8 @@ LABELS = {
     0x6003: "READFLASH",
     0x6052: "CHUNKJUMP",
     0x60DE: "CHUNKCALL",
+    0x8000: "LCD_CMD",
+    0xc000: "LCD_DATA",
     0x80: "i0",
     0x81: "i1",
     0x82: "i2",
@@ -31,6 +33,7 @@ LABELS = {
     0x105: "p5",
     0x106: "p6",
     0x99: "flash_encryption_key",
+    0x180: "shadow_01",
     0x18E: "chunksp",
     0x18F: "chunkstack",
 }
@@ -549,7 +552,7 @@ while leads:
         else:
             pc += 1
 
-print('#include "tony.inc"')
+print('#include "tony.inc"\n.text\nentry:')
 pc = BASE
 while is_output[pc]:
     if is_label[pc]:

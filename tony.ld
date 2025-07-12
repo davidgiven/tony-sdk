@@ -4,14 +4,36 @@ MEMORY {
 }
 
 SECTIONS {
+    GPIO1 = 0x01;
+    GPIO2 = 0x02;
+    LCD_CONTROL = 0x35;
+
     i0 = 0x80;
     i1 = 0x81;
     i2 = 0x82;
     i3 = 0x83;
     i4 = 0x84;
+    i5 = 0x85;
+    i6 = 0x86;
+
+    o0 = 0x8d;
+    o1 = 0x8e;
+    o2 = 0x8f;
+    o3 = 0x90;
+
+    p0 = 0x100;
+    p1 = 0x101;
+    p2 = 0x102;
+    p3 = 0x103;
+    p4 = 0x104;
+    p5 = 0x105;
+    p6 = 0x106;
+    p7 = 0x107;
 
     screen_width = 0x97;
     screen_height = 0x98;
+    flash_encryption_key = 0x99;
+    shadow_01 = 0x180;
 
     SYSCALL = 0x6000;
     READFLASH = 0x6003;

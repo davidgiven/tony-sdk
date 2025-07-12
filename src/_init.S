@@ -32,11 +32,11 @@ entry:
     sta 0x09                             
     lda #0xFD                            
     sta 0x01                             
-    sta 0x0180                           
+    sta shadow_01                           
     jsr delay                           
-    lda #0x11                            
+    lda #0x11 ; sleep off
     sta LCD_CMD                           
-    lda #0x04                            
+    lda #0x04 ; read ID                
     sta LCD_CMD                           
     lda LCD_DATA                           
     lda LCD_DATA                           
@@ -102,6 +102,11 @@ done:
     lda #0x80                            
     sta screen_width
     stz 0xB6                             
+
+	lda shadow_01
+	ora #GPIO1_LCD_BACKLIGHT
+	sta shadow_01
+	sta GPIO1
 
     chunkjump init_other
 
