@@ -27,313 +27,415 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "proto.h"
-#include "options.h"
 #include "opcodes.h"
+#include "options.h"
+#include "proto.h"
 
 #ifndef __STDC__
-void
-Dump ()
+void Dump()
 #else
-void Dump (void)
+void Dump(void)
 #endif
 {
-  ADDR_T address, addr;
-  unsigned counter, size, maxwidth;
-  char *lineprefix, *lineinfix;
-  table *entry;
-  opcodes *instr;
+    ADDR_T address, addr;
+    unsigned counter, size, maxwidth;
+    char *lineprefix, *lineinfix;
+    table* entry;
+    opcodes* instr;
 
-  if (fVerbose)
-    fprintf (stderr, "%s: Dumping the source code.\n", prog);
+    if (fVerbose)
+        fprintf(stderr, "%s: Dumping the source code.\n", prog);
 
-  /* determine the maximum amount of bytes dumped per line */
+    /* determine the maximum amount of bytes dumped per line */
 
-  maxwidth = listwidth < 2 ? 2 : listwidth;
+    maxwidth = listwidth < 2 ? 2 : listwidth;
 
-  for (counter = 0; counter < 256; counter++)
-    if (maxwidth < sizes[opset[counter].admode])
-      maxwidth = sizes[opset[counter].admode];
+    for (counter = 0; counter < 256; counter++)
+        if (maxwidth < sizes[opset[counter].admode])
+            maxwidth = sizes[opset[counter].admode];
 
-  /* create prefix string for lines without address information */
-  switch (Options & M_ADDRESSES) {
-  case O_ADR_ADRPFIX:
-    counter = 5;
-    break;
-
-  case O_ADR_ADR_DMP:
-    counter = 5 + 3 * maxwidth;
-    break;
-
-  default:
-    counter = 0;
-  }
-
-  lineprefix = malloc (counter + 1);
-
-  if (counter >= 5) {
-    lineinfix = lineprefix + 5;
-
-    for (lineprefix[counter] = 0; counter--; lineprefix[counter] = ' ');
-  }
-  else {
-    *lineprefix = 0;
-    lineinfix = lineprefix;
-  }
-
-  /* print the label definitions */
-
-  for (address = EndAddress < StartAddress ? EndAddress : 0;
-       address != StartAddress; address++)
-    if (IsLabeled (address))
-      fprintf (stdout, "%s%s = $%x\n", lineprefix, Label (address, abso),
-	address);
-
-  if (EndAddress >= StartAddress)
-    for (address = EndAddress; address; address++)
-      if (IsLabeled (address))
-        fprintf (stdout, "%s%s = $%x\n", lineprefix, Label (address, abso),
-		address);
-
-  /* dump the program */
-
-  if(Options & B_SA_WORD)
-	fprintf(stdout, "%s\t.word $%04x", lineprefix, StartAddress);
-  fprintf (stdout, "\n%s\t* = $%04x\n\n", lineprefix, StartAddress);
-  if(BasicHeaderLength)
-	fprintf(stdout, "; %d byte BASIC header.\n", BasicHeaderLength);
-
-/*
-  for (address = StartAddress; (ADDR_T)(address - StartAddress) <
-       (ADDR_T)(EndAddress - StartAddress); address += size)
-*/
-  address = StartAddress;
-  for (;;) {
-    if (GetMemType (address) == MEM_INSTRUCTION) {
-      if (IsLabeled (address)) {
-	if (Options & M_ADDRESSES)
-	  fprintf (stdout, "%04x %s%s:\n", address,
-                   lineinfix, Label (address, abso));
-	else {
-	  fprintf (stdout, "%s", Label (address, abso));
-		if (Options & B_LABCOL)
-			fprintf(stdout, ":\n");
-	}
-      }
-
-      instr = &opset[Memory[address]];
-      size = sizes[instr->admode];
-
-      for (counter = 1; counter < size; counter++) {
-        if (IsLabeled (address + counter)) {
-	  if (Options & M_ADDRESSES)
-	    fprintf (stdout, "\t%04x %s%s = * + %u\n",
-                     (ADDR_T)(address + counter),
-		     lineinfix, Label (address + counter, abso), counter);
-	  else
-	    fprintf (stdout, "\t%s = * + %u\n",
-		     Label (address + counter, abso), counter);
-	}
-
-        if (FindNextEntry (NULL, address, ~0, WRN_INSTR_WRITTEN_TO))
-          fprintf (stdout, "%s ; Instruction opcode $%04x accessed.\n",
-                   lineprefix, address);
-
-        entry = NULL;
-
-        while ((entry = FindNextEntry (entry, address + counter, 0, 0)))
-          switch (entry->type) {
-          case WRN_PARAM_WRITTEN_TO:
-            fprintf (stdout, "%s ; Instruction parameter $%04x accessed.\n",
-		     lineprefix, address + counter);
+    /* create prefix string for lines without address information */
+    switch (Options & M_ADDRESSES)
+    {
+        case O_ADR_ADRPFIX:
+            counter = 5;
             break;
 
-          case WRN_PARAM_JUMPED_TO:
-            fprintf (stdout, "%s ; Instruction parameter $%04x jumped to.\n",
-		     lineprefix, address + counter);
+        case O_ADR_ADR_DMP:
+            counter = 5 + 3 * maxwidth;
             break;
-          }
-      }
 
-      switch (Options & M_ADDRESSES) {
-      case O_ADR_ADRPFIX:
-	fprintf (stdout, "%04x ", address);
-	break;
-
-      case O_ADR_ADR_DMP:
-	fprintf (stdout, "%04x ", address);
-
-	for (counter = 0; counter < size; counter++)
-	  fprintf (stdout, "%02x ", Memory[(ADDR_T)(address + counter)]);
-
-	fputs (lineinfix + 3 * counter, stdout);
-      }
-
-      fputs ("\t", stdout);
-
-      switch (instr->admode) {
-      case accu:
-      case impl:
-        fprintf (stdout, "%s%s\n", mne[instr->mnemonic],
-                 postfix[instr->admode]);
-        break;
-      case imm:
-        addr = Memory[(ADDR_T)(address + 1)];
-        fprintf (stdout, "%s #$%02x\n", mne[instr->mnemonic], addr);
-        break;
-      case abso:
-      case absx:
-      case absy:
-      case iabs:
-      case iabsx:
-        addr = Memory[(ADDR_T)(address + 1)] |
-          (Memory[(ADDR_T)(address + 2)] << 8);
-          /* Fix to ensure 16-bit addresses to zero-page are maintained as 16-bit */
-          fprintf (stdout, "%s %s%s%s%s\n", mne[instr->mnemonic],
-		prefix[instr->admode],
-                   ((addr < 256 && instr->mnemonic != S_JMP &&
-			instr->mnemonic != S_JSR) ? "!" : ""),
-                   Label (addr, abso),postfix[instr->admode]);
-        break;
-      case zp:
-      case zpx:
-      case zpy:
-      case ind:
-      case indx:
-      case indy:
-        addr = Memory[(ADDR_T)(address + 1)];
-        fprintf (stdout, "%s %s%s%s\n", mne[instr->mnemonic],
-                 prefix[instr->admode], Label (addr, zp),
-                 postfix[instr->admode]);
-        break;
-      case rel:
-        addr = (int)Memory[(ADDR_T)(address + 1)];
-	addr -= (addr > 127) ? 256 : 0;
-/*fprintf(stderr, "%d %d %d\n", address, size, addr);*/
-        addr += address + size;
-        fprintf (stdout, "%s %s%s%s\n", mne[instr->mnemonic],
-                 prefix[instr->admode], Label (addr, abso),
-                 postfix[instr->admode]);
-        break;
-      case zrel: /* BBR0, etc. 65C02 instructions */
-        addr = (int)Memory[(ADDR_T)(address + 2)];
-	addr -= (addr > 127) ? 256 : 0;
-        addr += address + size;
-        fprintf (stdout, "%s %s, %s\n", mne[instr->mnemonic],
-                Label (Memory[(ADDR_T)(address + 1)], abso),
-		Label (addr, abso));
-        break;
-      }
+        default:
+            counter = 0;
     }
-    else if (address != (addr = WordTableEnd (address))) { /* word table */
-      for (size = (ADDR_T)(addr - address); size;
-	   address += (counter = size > (maxwidth & ~1) ?
-                       (maxwidth & ~1) : size), size -= counter) {
-	if (IsLabeled (address)) {
-	  if (Options & M_ADDRESSES)
-	    fprintf (stdout, "%04x %s%s:\n", address, lineinfix,
-                     Label (address, abso));
-	  else
-	    fprintf (stdout, "%s ", Label (address, abso));
-	}
-	for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size,
-	     addr = address + 1; --counter; addr++)
-	  if (IsLabeled (addr)) {
-	    if (Options & M_ADDRESSES)
-	      fprintf (stdout, "%04x %s%s = * + %u\n", addr, lineinfix,
-		       Label (addr, abso), (ADDR_T)(addr - address));
-	    else
-	      fprintf (stdout, "\t%s = * + %u\n", Label (addr, abso),
-		       (ADDR_T)(addr - address));
-	  }
 
-	if (Options & M_ADDRESSES)
-	  fprintf (stdout, "%04x ", address);
+    lineprefix = malloc(counter + 1);
 
-	if ((Options & M_ADDRESSES) == O_ADR_ADR_DMP) {
-	  for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size,
-	       addr = address; counter--; addr++) {
-	    fprintf (stdout, "%02x ", Memory[addr]);
-	  }
-	  fputs (lineinfix + 3 * (size > (maxwidth & ~1) ?
-				  (maxwidth & ~1) : size), stdout);
-	}
+    if (counter >= 5)
+    {
+        lineinfix = lineprefix + 5;
 
-	fprintf (stdout, "  .word %s",
-		 Label (Memory[address] |
-                 (Memory[(ADDR_T)(address + 1)] << 8), abso));
-
-	for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size,
-	     addr = address + 2; counter -= 2; addr += 2)
-	  fprintf (stdout, ",%s",
-		   Label (Memory[addr] | (Memory[(ADDR_T)(addr + 1)] << 8),
-			abso));
-			
-
-	fputc ('\n', stdout);
-      }
+        for (lineprefix[counter] = 0; counter--; lineprefix[counter] = ' ')
+            ;
     }
-    else { /* data block */
-      for (size = 1; size < maxwidth; size++) { /* determine the size */
-	addr = address + size; 
+    else
+    {
+        *lineprefix = 0;
+        lineinfix = lineprefix;
+    }
 
-	if (GetMemType (addr) == MEM_INSTRUCTION ||
-	    addr != WordTableEnd (addr))
-	  break;
-      }
+    /* print the label definitions */
 
-      if (IsLabeled (address)) {
-	if (Options & M_ADDRESSES)
-	  fprintf (stdout, "%04x %s%s:\n", address, lineinfix,
-		   Label (address, abso));
-	else
-	  fprintf (stdout, "%s ", Label (address, abso));
-      }
+    for (address = EndAddress < StartAddress ? EndAddress : 0;
+        address != StartAddress;
+        address++)
+        if (IsLabeled(address))
+            fprintf(stdout,
+                "%s%s = $%x\n",
+                lineprefix,
+                Label(address, abso),
+                address);
 
-      for (counter = size, addr = address + 1; --counter; addr++)
-        if (IsLabeled (addr)) {
-	  if (Options & M_ADDRESSES)
-	    fprintf (stdout, "%04x %s%s = * + %u\n", addr, lineinfix,
-		     Label (addr, abso), (ADDR_T)(addr - address));
-	  else
-	    fprintf (stdout, "\t%s = * + %u\n", Label (addr, abso),
-		     (ADDR_T)(addr - address));
+    if (EndAddress >= StartAddress)
+        for (address = EndAddress; address; address++)
+            if (IsLabeled(address))
+                fprintf(stdout,
+                    "%s%s = $%x\n",
+                    lineprefix,
+                    Label(address, abso),
+                    address);
+
+    /* dump the program */
+
+    if (Options & B_SA_WORD)
+        fprintf(stdout, "%s\t.word $%04x", lineprefix, StartAddress);
+    fprintf(stdout, "#include \"tony.inc\"\n.text\n");
+    if (BasicHeaderLength)
+        fprintf(stdout, "; %d byte BASIC header.\n", BasicHeaderLength);
+
+    /*
+      for (address = StartAddress; (ADDR_T)(address - StartAddress) <
+           (ADDR_T)(EndAddress - StartAddress); address += size)
+    */
+    address = StartAddress;
+    for (;;)
+    {
+        if (GetMemType(address) == MEM_INSTRUCTION)
+        {
+            if (IsLabeled(address))
+            {
+                if (Options & M_ADDRESSES)
+                    fprintf(stdout,
+                        "%04x %s%s:\n",
+                        address,
+                        lineinfix,
+                        Label(address, abso));
+                else
+                {
+                    fprintf(stdout, "%s", Label(address, abso));
+                    if (Options & B_LABCOL)
+                        fprintf(stdout, ":\n");
+                }
+            }
+
+            instr = &opset[Memory[address]];
+            size = sizes[instr->admode];
+
+            for (counter = 1; counter < size; counter++)
+            {
+                if (IsLabeled(address + counter))
+                {
+                    if (Options & M_ADDRESSES)
+                        fprintf(stdout,
+                            "\t%04x %s%s = * + %u\n",
+                            (ADDR_T)(address + counter),
+                            lineinfix,
+                            Label(address + counter, abso),
+                            counter);
+                    else
+                        fprintf(stdout,
+                            "\t%s = * + %u\n",
+                            Label(address + counter, abso),
+                            counter);
+                }
+
+                if (FindNextEntry(NULL, address, ~0, WRN_INSTR_WRITTEN_TO))
+                    fprintf(stdout,
+                        "%s ; Instruction opcode $%04x accessed.\n",
+                        lineprefix,
+                        address);
+
+                entry = NULL;
+
+                while ((entry = FindNextEntry(entry, address + counter, 0, 0)))
+                    switch (entry->type)
+                    {
+                        case WRN_PARAM_WRITTEN_TO:
+                            fprintf(stdout,
+                                "%s ; Instruction parameter $%04x accessed.\n",
+                                lineprefix,
+                                address + counter);
+                            break;
+
+                        case WRN_PARAM_JUMPED_TO:
+                            fprintf(stdout,
+                                "%s ; Instruction parameter $%04x jumped to.\n",
+                                lineprefix,
+                                address + counter);
+                            break;
+                    }
+            }
+
+            switch (Options & M_ADDRESSES)
+            {
+                case O_ADR_ADRPFIX:
+                    fprintf(stdout, "%04x ", address);
+                    break;
+
+                case O_ADR_ADR_DMP:
+                    fprintf(stdout, "%04x ", address);
+
+                    for (counter = 0; counter < size; counter++)
+                        fprintf(stdout,
+                            "%02x ",
+                            Memory[(ADDR_T)(address + counter)]);
+
+                    fputs(lineinfix + 3 * counter, stdout);
+            }
+
+            fputs("\t", stdout);
+
+            switch (instr->admode)
+            {
+                case accu:
+                case impl:
+                    fprintf(stdout,
+                        "%s%s\n",
+                        mne[instr->mnemonic],
+                        postfix[instr->admode]);
+                    break;
+                case imm:
+                    addr = Memory[(ADDR_T)(address + 1)];
+                    fprintf(stdout, "%s #$%02x\n", mne[instr->mnemonic], addr);
+                    break;
+                case abso:
+                case absx:
+                case absy:
+                case iabs:
+                case iabsx:
+                    addr = Memory[(ADDR_T)(address + 1)] |
+                           (Memory[(ADDR_T)(address + 2)] << 8);
+                    /* Fix to ensure 16-bit addresses to zero-page are
+                     * maintained as 16-bit
+                     */
+                    fprintf(stdout,
+                        "%s %s%s%s%s\n",
+                        mne[instr->mnemonic],
+                        prefix[instr->admode],
+                        ((addr < 256 && instr->mnemonic != S_JMP &&
+                             instr->mnemonic != S_JSR)
+                                ? "!"
+                                : ""),
+                        Label(addr, abso),
+                        postfix[instr->admode]);
+                    break;
+                case zp:
+                case zpx:
+                case zpy:
+                case ind:
+                case indx:
+                case indy:
+                    addr = Memory[(ADDR_T)(address + 1)];
+                    fprintf(stdout,
+                        "%s %s%s%s\n",
+                        mne[instr->mnemonic],
+                        prefix[instr->admode],
+                        Label(addr, zp),
+                        postfix[instr->admode]);
+                    break;
+                case rel:
+                    addr = (int)Memory[(ADDR_T)(address + 1)];
+                    addr -= (addr > 127) ? 256 : 0;
+                    /*fprintf(stderr, "%d %d %d\n", address, size, addr);*/
+                    addr += address + size;
+                    fprintf(stdout,
+                        "%s %s%s%s\n",
+                        mne[instr->mnemonic],
+                        prefix[instr->admode],
+                        Label(addr, abso),
+                        postfix[instr->admode]);
+                    break;
+                case zrel: /* BBR0, etc. 65C02 instructions */
+                    addr = (int)Memory[(ADDR_T)(address + 2)];
+                    addr -= (addr > 127) ? 256 : 0;
+                    addr += address + size;
+                    fprintf(stdout,
+                        "%s %s, %s\n",
+                        mne[instr->mnemonic],
+                        Label(Memory[(ADDR_T)(address + 1)], abso),
+                        Label(addr, abso));
+                    break;
+            }
+        }
+        else if (address != (addr = WordTableEnd(address)))
+        { /* word table */
+            for (size = (ADDR_T)(addr - address); size;
+                address +=
+                (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size),
+                size -= counter)
+            {
+                if (IsLabeled(address))
+                {
+                    if (Options & M_ADDRESSES)
+                        fprintf(stdout,
+                            "%04x %s%s:\n",
+                            address,
+                            lineinfix,
+                            Label(address, abso));
+                    else
+                        fprintf(stdout, "%s ", Label(address, abso));
+                }
+                for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size,
+                    addr = address + 1;
+                    --counter;
+                    addr++)
+                    if (IsLabeled(addr))
+                    {
+                        if (Options & M_ADDRESSES)
+                            fprintf(stdout,
+                                "%04x %s%s = * + %u\n",
+                                addr,
+                                lineinfix,
+                                Label(addr, abso),
+                                (ADDR_T)(addr - address));
+                        else
+                            fprintf(stdout,
+                                "\t%s = * + %u\n",
+                                Label(addr, abso),
+                                (ADDR_T)(addr - address));
+                    }
+
+                if (Options & M_ADDRESSES)
+                    fprintf(stdout, "%04x ", address);
+
+                if ((Options & M_ADDRESSES) == O_ADR_ADR_DMP)
+                {
+                    for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1)
+                                                          : size,
+                        addr = address;
+                        counter--;
+                        addr++)
+                    {
+                        fprintf(stdout, "%02x ", Memory[addr]);
+                    }
+                    fputs(lineinfix + 3 * (size > (maxwidth & ~1)
+                                                  ? (maxwidth & ~1)
+                                                  : size),
+                        stdout);
+                }
+
+                fprintf(stdout,
+                    "  .word %s",
+                    Label(
+                        Memory[address] | (Memory[(ADDR_T)(address + 1)] << 8),
+                        abso));
+
+                for (counter = size > (maxwidth & ~1) ? (maxwidth & ~1) : size,
+                    addr = address + 2;
+                    counter -= 2;
+                    addr += 2)
+                    fprintf(stdout,
+                        ",%s",
+                        Label(Memory[addr] | (Memory[(ADDR_T)(addr + 1)] << 8),
+                            abso));
+
+                fputc('\n', stdout);
+            }
+        }
+        else
+        { /* data block */
+            for (size = 1; size < maxwidth; size++)
+            { /* determine the size */
+                addr = address + size;
+
+                if (GetMemType(addr) == MEM_INSTRUCTION ||
+                    addr != WordTableEnd(addr))
+                    break;
+            }
+
+            if (IsLabeled(address))
+            {
+                if (Options & M_ADDRESSES)
+                    fprintf(stdout,
+                        "%04x %s%s:\n",
+                        address,
+                        lineinfix,
+                        Label(address, abso));
+                else
+                    fprintf(stdout, "%s:\n", Label(address, abso));
+            }
+
+            for (counter = size, addr = address + 1; --counter; addr++)
+                if (IsLabeled(addr))
+                {
+                    if (Options & M_ADDRESSES)
+                        fprintf(stdout,
+                            "%04x %s%s = * + %u\n",
+                            addr,
+                            lineinfix,
+                            Label(addr, abso),
+                            (ADDR_T)(addr - address));
+                    else
+                        fprintf(stdout,
+                            "\t%s = . + %u\n",
+                            Label(addr, abso),
+                            (ADDR_T)(addr - address));
+                }
+
+            if (Options & M_ADDRESSES)
+                fprintf(stdout, "%04x ", address);
+
+            if ((Options & M_ADDRESSES) == O_ADR_ADR_DMP)
+            {
+                for (counter = size, addr = address; counter--; addr++)
+                    fprintf(stdout, "%02x ", Memory[addr]);
+
+                fputs(lineinfix + 3 * size, stdout);
+            }
+
+            fprintf(stdout, "\t.byte $%02x", Memory[address]);
+
+            if (address != 65535 && size > 0)
+            {
+                int topom;
+
+                topom = (Overflowed) ? (65535 - address) + 1
+                                     : (EndAddress - address);
+                size = (size < topom) ? size : topom;
+
+                for (counter = size, addr = address + 1; --counter; addr++)
+                    fprintf(stdout, ",$%02x", Memory[addr]);
+
+                fputc('\n', stdout);
+            }
         }
 
-      if (Options & M_ADDRESSES)
-	fprintf (stdout, "%04x ", address);
-
-      if ((Options & M_ADDRESSES) == O_ADR_ADR_DMP) {
-	for (counter = size, addr = address; counter--; addr++)
-	  fprintf (stdout, "%02x ", Memory[addr]);
-
-	fputs (lineinfix + 3 * size, stdout);
-      }
-
-      fprintf (stdout, "\t.byt $%02x", Memory[address]);
-
-      if (address != 65535 && size > 0) {
-        int topom;
-
-        topom = (Overflowed) ? (65535 - address)+1 : (EndAddress - address);
-        size = (size < topom) ? size : topom; 
-
-        for (counter = size, addr = address + 1; --counter; addr++)
-	  fprintf (stdout, ",$%02x", Memory[addr]);
-
-        fputc ('\n', stdout);
-      }
+        if (Overflowed)
+        {
+            /* Ensure we get the very last byte at $FFFF. */
+            if ((ADDR_T)(address + size) < address)
+            { /* Overflowed */
+                address += size;
+                break;
+            }
+            else
+                address += size;
+        }
+        else
+        {
+            address += size;
+            if (address >= EndAddress)
+                break;
+        }
     }
-
-    if (Overflowed) {
-      /* Ensure we get the very last byte at $FFFF. */
-      if ((ADDR_T)(address+size) < address) { /* Overflowed */
-        address += size;
-        break;
-      } else address += size;
-    } else {
-      address += size;
-      if (address >= EndAddress) break;
-    }
-  }
 }
