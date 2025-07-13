@@ -4,7 +4,15 @@
 GPIO1_LCD_BACKLIGHT = 0x02
 GPIO2_CS = 0x08
 
-SYS_DRAW_CHAR = 0x26
+SYS_DRAW_SPRITE_IMM              = 0x00
+SYS_FILL_RECTANGLE_IMM           = 0x04
+SYS_GET_SPRITE_INFO              = 0x06
+SYS_DRAW_SPRITE                  = 0x08
+SYS_CLEAR_DISPLAY_LIST_TO_SPRITE = 0x0a
+SYS_CLEAR_DISPLAY_LIST_TO_COLOUR = 0x0c
+SYS_CLEAR_DISPLAY_LIST_TO_VIDEO  = 0x0e
+SYS_DRAW_CHAR                    = 0x24
+SYS_DRAW_CHAR_IMM                = 0x26
 
 .zeropage i0, i1, i2, i3, i4, i5, i6
 .zeropage o0, i1, i2, i3

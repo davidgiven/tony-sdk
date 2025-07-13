@@ -97,10 +97,10 @@ entry:
 done:
     stz 0x34                             
     jsr delay                           
-    lda #0xA0                            
-    sta screen_height                             
-    lda #0x80                            
-    sta screen_width
+    lda #160
+    sta screen_width                             
+    lda #128
+    sta screen_height
     stz 0xB6                             
 
 	lda shadow_01
