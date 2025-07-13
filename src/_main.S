@@ -1,4 +1,6 @@
 #include "tony.inc"
+#include "zif.inc"
+
 .text
 entry:
 	stz p0               ; 0300 9c 00 01
@@ -14,12 +16,15 @@ entry:
 	lda #0x30            ; 0317 a9 30
 	sta p1               ; 0319 8d 01 01
 	ldx #0
-L0322:
-	lda text, x         ; 0322 bd 48 03
-	beq L0347            ; 0327 f0 1e
-	jsr L032e            ; 0329 20 2e 03
-	bra L0322            ; 032c 80 f4
-L032e:
+	zloop
+		lda text, x         ; 0322 bd 48 03
+		zbreakif eq
+		jsr drawchar
+		inx
+	zendloop
+	rts
+
+drawchar:
 	sta p2               ; 032e 8d 02 01
 	stz p3               ; 0331 9c 03 01
 	lda p0               ; 0334 ad 00 01
@@ -32,8 +37,7 @@ L032e:
 	clc                  ; 0340 18
 	adc #0x08            ; 0341 69 08
 	sta p0               ; 0343 8d 00 01
-	inx                  ; 0346 e8
-L0347:
 	rts                  ; 0347 60
+
  text:
     .asciz "Hello, world!"
