@@ -6,8 +6,7 @@ entry:
 	stz p0               ; 0300 9c 00 01
 	lda #0x7f            ; 0303 a9 7f
 	sta p1               ; 0305 8d 01 01
-	lda 0x2ff            ; 0308 a9 37
-    inc 0x2ff
+	lda #0x2f
 	sta p2               ; 030a 8d 02 01
 	ldx #0x0c            ; 030d a2 0c
 	jsr SYSCALL          ; 030f 20 00 60
@@ -22,6 +21,16 @@ entry:
 		jsr drawchar
 		inx
 	zendloop
+	
+	stz p0
+	stz p1
+	stz p2
+	stz p3
+	stz p4
+	lda #0xff
+	sta p5
+	ldx #SYS_DRAW_SPRITE
+	jsr SYSCALL
 	rts
 
 drawchar:

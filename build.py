@@ -63,9 +63,10 @@ hostclibrary(
 
 package(name="libfmt", package="fmt")
 hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
+hostcxxprogram(name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"])
 hostcxxprogram(
     name="despriter",
-    srcs=["tools/despriter.cc"],
+    srcs=["tools/despriter.cc", "include/palette.h"],
     deps=[".+libfmt", ".+libstb"],
 )
 
@@ -98,5 +99,6 @@ export(
         "tony.img": ".+romimage",
         "bin/dechunker": ".+dechunker",
         "bin/despriter": ".+despriter",
+        "bin/extractpalette": ".+extractpalette",
     },
 )

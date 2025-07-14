@@ -9,26 +9,15 @@
 #include <assert.h>
 #include "stb_image_write.h"
 
+const uint8_t palette[256][3] = {
+    #include "palette.h"
+};
+
 int main(int argc, const char** argv)
 {
     std::fstream flashrom(argv[1]);
     const std::vector<uint8_t> data(
         std::istreambuf_iterator<char>{flashrom}, {});
-
-    std::fstream maskrom(argv[2]);
-    const std::vector<uint8_t> rom(std::istreambuf_iterator<char>{maskrom}, {});
-
-    uint8_t palette[256][3];
-    for (int i = 0; i < 256; i++)
-    {
-        uint16_t rgb16 = rom[0x1357 + i] | (rom[0x1257 + i] << 8);
-        float b = (float)(rgb16 & 0x1f) / (float)0x1f;
-        float g = (float)((rgb16 >> 5) & 0x3f) / (float)0x3f;
-        float r = (float)((rgb16 >> 11) & 0x1f) / (float)0x1f;
-        palette[i][0] = 255.0 * r;
-        palette[i][1] = 255.0 * g;
-        palette[i][2] = 255.0 * b;
-    }
 
     auto read3 = [&](uint32_t o)
     {
