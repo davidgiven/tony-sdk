@@ -1,52 +1,116 @@
 #include "tony.inc"
 #include "zif.inc"
 
+FRAME_ID = 0x2ff
+
 .text
 entry:
-	stz p0               ; 0300 9c 00 01
-	lda #0x7f            ; 0303 a9 7f
-	sta p1               ; 0305 8d 01 01
-	lda #0x2f
-	sta p2               ; 030a 8d 02 01
-	ldx #0x0c            ; 030d a2 0c
-	jsr SYSCALL          ; 030f 20 00 60
-	lda #24
-	sta p0               ; 0314 8d 00 01
-	lda #0x30            ; 0317 a9 30
-	sta p1               ; 0319 8d 01 01
-	ldx #0
-	zloop
-		lda text, x         ; 0322 bd 48 03
-		zbreakif eq
-		jsr drawchar
-		inx
-	zendloop
-	
+	; Clear the display list to one of our background frames.
+
 	stz p0
 	stz p1
-	stz p2
-	stz p3
+
+	clc
+	lda FRAME_ID
+	adc #<FRAME0_RSRCID
+	sta p2
+	lda #0
+	adc #>FRAME0_RSRCID
+	sta p3
+
+	stz p4
+	lda #0xff
+	sta p5
+	ldx #SYS_CLEAR_DISPLAY_LIST_TO_SPRITE
+	jsr SYSCALL
+
+	; Advance to the next frame.
+
+	lda FRAME_ID
+	inc a
+	cmp #14
+	zif eq
+		lda #0
+	zendif
+	sta FRAME_ID
+
+	; Unsure how this works. I think it sets the GPIO ports to input (except for
+	; the bit in GPIO1 which controls the backlight), and then lets the drivers
+	; float high so that the buttons can pull them low.
+
+	lda #0xfe
+	sta GPDIR1
+	lda shadow_01
+	ora #1
+	sta GPIO1
+
+	lda #0xff
+	stz GPDIR0
+	sta GPIO0
+
+	; This delay is necessary before reading the GPIOs or you get glitching.
+	; For some reason.
+
+	ldx #15
+	zrepeat
+		pha
+		pla
+		dex
+	zuntil eq
+
+	; Draw the overlay.
+
+	lda #3
+	sta p0
+	sta p1
+
+	lda GPIO0
+	eor #0xff
+	jsr hex8
+	jsr space
+
+	lda GPIO1
+	eor #0xff
+	jsr hex8
+	jsr space
+
+	rts
+
+hex8:
+	pha
+    lsr a
+    lsr a
+    lsr a
+    lsr a
+    jsr print_h4
+    pla
+    and #0x0f
+print_h4:
+	ldx p0
+	ldy p1
+	phx
+	phy
+
+	clc
+	adc #<N0_RSRCID
+	sta p2
+	lda #0
+	adc #>N0_RSRCID
+	sta p3
+
 	stz p4
 	lda #0xff
 	sta p5
 	ldx #SYS_DRAW_SPRITE
 	jsr SYSCALL
-	rts
-
-drawchar:
-	sta p2               ; 032e 8d 02 01
-	stz p3               ; 0331 9c 03 01
-	lda p0               ; 0334 ad 00 01
-	phx                  ; 0337 da
-	pha                  ; 0338 48
-	ldx #SYS_DRAW_CHAR
-	jsr SYSCALL          ; 033b 20 00 60
-	pla                  ; 033e 68
-	plx                  ; 033f fa
-	clc                  ; 0340 18
-	adc #0x08            ; 0341 69 08
-	sta p0               ; 0343 8d 00 01
-	rts                  ; 0347 60
-
- text:
-    .asciz "Hello, world!"
+	
+	ply
+	plx
+	stx p0
+	sty p1
+space:
+	clc       
+	lda p0
+	adc #0x0a
+	sta p0  
+	rts    

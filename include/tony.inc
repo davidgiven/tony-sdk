@@ -1,6 +1,6 @@
 #pragma once
 
-.zeropage GPIO1, GPIO2, LCD_CONTROL
+.zeropage GPIO1, GPIO2, GPDIR0, GPDIR1, LCD_CONTROL
 GPIO1_LCD_BACKLIGHT = 0x02
 GPIO2_CS = 0x08
 
@@ -46,4 +46,10 @@ SYS_DRAW_CHAR_IMM                = 0x26
 .macro chunkcall name
     _setupchunk \name
     jsr CHUNKCALL
+.endm
+
+.macro resource_reference name
+    .byte \name\()_chunk_start@mos16lo
+    .byte \name\()_chunk_start@mos16hi
+    .byte \name\()_chunk_start@mos24bank
 .endm

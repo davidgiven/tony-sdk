@@ -2,6 +2,7 @@ from build.ab import export, simplerule, filenamesof, filenameof
 from build.llvm import llvmrawprogram, llvmclibrary
 from build.c import hostcxxprogram, hostclibrary
 from build.pkg import package
+from build.utils import stripext
 from glob import glob
 
 
@@ -13,6 +14,16 @@ def tonyprogram(
     cflags=[],
     ldflags=[],
 ):
+    allresources = " ".join(sprites.keys())
+    r = simplerule(
+        name=name + "_rsrc",
+        ins=["tools/genresources.py"],
+        outs=["=resourcetable.S"],
+        commands=[f"$(PYTHON) $[ins[0]] {allresources} > $[outs[0]]"],
+        label="GENRESOURCES",
+    )
+    chunks = chunks | {"resourcetable": [r]}
+
     args = []
     targets = []
     for k, v in chunks.items():
@@ -23,11 +34,11 @@ def tonyprogram(
         r = simplerule(
             name=f"{name}_sprite_{k}",
             ins=[v],
-            outs=[f"={name}.o"],
+            outs=[f"={name}_sprite_{k}.o"],
             deps=[".+spritify"],
             commands=[
                 "$[deps[0]] $[ins[0]] $[dir]/temp.bin",
-                "$(LD6502) -m moself -r -b binary $[dir]/temp.bin -o $[outs[0]]"
+                "$(LD6502) -m moself -r -b binary $[dir]/temp.bin -o $[outs[0]]",
             ],
             label="SPRITE",
         )
@@ -91,7 +102,6 @@ tonyprogram(
         "_main": ["src/_main.S"],
         "_vwrite": ["src/_vwrite.S"],
         "_font": ["src/_font.S"],
-        "spritetable": ["src/spritetable.S"],
         "init_screen_009106": ["src/init_screen_009106.S"],
         "init_screen_313021": ["src/init_screen_313021.S"],
         "init_screen_333023": ["src/init_screen_333023.S"],
@@ -99,7 +109,7 @@ tonyprogram(
         "init_screen_other": ["src/init_screen_other.S"],
         "init_other": ["src/init_other.S"],
     },
-    sprites={"sprite_00": ["frames/00100.png"]},
+    sprites={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
 )
 
 export(

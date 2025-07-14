@@ -42,10 +42,24 @@ I don't know how the compressed data works yet.
 
 ```
 0000+80     I/O area
+  0000      GPIOs
+              Seem to be multiple peripherals here; you need to configure
+              something before the buttons are readable.
+              input bit 1: UP
+              input bit 2: LEFT
+              input bit 3: RIGHT
+              input bit 4: DOWN
+              input bit 5: START
+              input bit 6: VOLUME
+              input bit 7: A
   0001      GPIOs
-              bit 1: LCD backlight
+              input bit 0: B
+              output bit 1: LCD backlight
   0002      GPIOs
-              bit 3: SPI CS line
+              output bit 3: SPI CS line
+  0008      GPDIR for GPIO0
+  0009      GPDIR for GPIO1
+  000a      GPDIR for GPIO2
   0010      SPI r/w register, high byte
   0011      SPI r/w register, low byte
   0013      SPI status register
@@ -117,6 +131,8 @@ I don't know how the compressed data works yet.
                 p1: bottom scanline to draw
                 p3p2: sprite index 
               0x24: add character to display list
+                Warning: uses memory all the way down to 0x3da, meaning you can
+                only use this from very short chunks!
                 p0, p1: (X, Y) position
                 p2: ASCII character
                 p3: foreground colour

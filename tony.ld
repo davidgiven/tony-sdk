@@ -1,11 +1,14 @@
 MEMORY {
-    ram (rw) : ORIGIN = 0x300, LENGTH = 0x1000
-    image (rw) : ORIGIN = 0, LENGTH = 0x10000
+    ram (rw) : ORIGIN = 0x300, LENGTH = 0x10000
+    image (rw) : ORIGIN = 0, LENGTH = 0x1000000
 }
 
 SECTIONS {
+    GPIO0 = 0x00;
     GPIO1 = 0x01;
     GPIO2 = 0x02;
+    GPDIR0 = 0x08;
+    GPDIR1 = 0x09;
     LCD_CONTROL = 0x35;
 
     i0 = 0x80;
@@ -33,6 +36,7 @@ SECTIONS {
     screen_width = 0x97;
     screen_height = 0x98;
     flash_encryption_key = 0x99;
+    shadow_00 = 0x1db;
     shadow_01 = 0x180;
 
     SYSCALL = 0x6000;
@@ -45,9 +49,9 @@ SECTIONS {
 
     header : {
         . = 0x00;
-        BYTE(LOADADDR(spritetable))
-        BYTE(LOADADDR(spritetable)>>8)
-        BYTE(LOADADDR(spritetable)>>16)
+        BYTE(LOADADDR(resourcetable))
+        BYTE(LOADADDR(resourcetable)>>8)
+        BYTE(LOADADDR(resourcetable)>>16)
         . = 0x03;
         SHORT(LOADADDR(_init));
         SHORT(SIZEOF(_init));
