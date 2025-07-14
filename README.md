@@ -139,3 +139,12 @@ I don't know how the compressed data works yet.
 c000        LCD r/w data register
 ffda        extended interrupt table (actually a mirror of its real location in 7fda)
 ```
+
+LICENSE
+=======
+
+The distribution contains parts of the libstb utility library, written by
+Sean T Barrett et al. This is public domain where possible and MIT licensed
+otherwise. Please see https://github.com/nothings/stb/blob/master/LICENSE
+for more information.
+

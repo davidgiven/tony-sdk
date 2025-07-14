@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include "stb_image_write.h"
 
 int main(int argc, const char** argv)
 {
@@ -52,18 +54,14 @@ int main(int argc, const char** argv)
                 "sprite 0x{:04x} at 0x{:06x} ({}) ", index, sprite, sprite);
             fmt::print("w={} h={} flags=0x{:02x}\n", w, h, flags);
 
-            std::fstream xpm(
-                fmt::format("sprites/{:04x}.xpm", index), std::fstream::out);
-            xpm << "/* XPM */\n";
-            xpm << "static char * image[] = {\n";
-            xpm << fmt::format("\"{} {} 256 2\",\n", w, h);
-            for (int i = 0; i < 255; i++)
-                xpm << fmt::format("\"{:02x} c #{:02x}{:02x}{:02x}\",\n",
-                    i,
-                    palette[i][0],
-                    palette[i][1],
-                    palette[i][2]);
-            xpm << fmt::format("\"ff c None\",\n");
+            std::vector<uint8_t> pixeldata;
+            auto write_pixel = [&](uint8_t b)
+            {
+                pixeldata.push_back(palette[b][0]);
+                pixeldata.push_back(palette[b][1]);
+                pixeldata.push_back(palette[b][2]);
+                pixeldata.push_back((b == 255) ? 0 : 255);
+            };
 
             std::vector<std::vector<uint8_t>> scanlines;
             int offset = 4;
@@ -80,7 +78,6 @@ int main(int argc, const char** argv)
 
                 /* Render the data. */
 
-                xpm << "\"";
                 int inptr = 0;
                 int outptr = 0;
                 uint8_t b;
@@ -99,19 +96,24 @@ int main(int argc, const char** argv)
                         count = scanline[inptr++];
                     }
 
-                    outptr += count;
-                    while (count--)
-                        xpm << fmt::format("{:02x}", b);
+                    while (count-- && (outptr < w))
+                    {
+                        write_pixel(b);
+                        outptr++;
+                    }
                 }
                 while (outptr < w)
                 {
-                    xpm << fmt::format("{:02x}", b);
+                    write_pixel(b);
                     outptr++;
                 }
-
-                xpm << "\",\n";
             }
-            xpm << "};\n";
+            stbi_write_png(fmt::format("sprites/{:04x}.png", index).c_str(),
+                w,
+                h,
+                4,
+                &pixeldata[0],
+                w * 4);
 
             if (false)
             {

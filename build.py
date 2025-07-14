@@ -1,7 +1,8 @@
 from build.ab import export, simplerule, filenamesof, filenameof
 from build.llvm import llvmrawprogram, llvmclibrary
-from build.c import hostcxxprogram
+from build.c import hostcxxprogram, hostclibrary
 from build.pkg import package
+from glob import glob
 
 
 def tonyprogram(
@@ -51,13 +52,21 @@ def tonyprogram(
     )
 
 
+hostclibrary(
+    name="libstb",
+    srcs=["third_party/stb/stb_image.c", "third_party/stb/stb_image_write.c"],
+    hdrs={
+        "stb_image.h": "third_party/stb/stb_image.h",
+        "stb_image_write.h": "third_party/stb/stb_image_write.h",
+    },
+)
+
 package(name="libfmt", package="fmt")
 hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
 hostcxxprogram(
     name="despriter",
     srcs=["tools/despriter.cc"],
-    deps=[".+libfmt"],
-    ldflags=["-lX11"],
+    deps=[".+libfmt", ".+libstb"],
 )
 
 llvmclibrary(
