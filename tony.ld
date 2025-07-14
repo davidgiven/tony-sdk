@@ -44,6 +44,10 @@ SECTIONS {
     LCD_DATA = 0xc000;
 
     header : {
+        . = 0x00;
+        BYTE(LOADADDR(spritetable))
+        BYTE(LOADADDR(spritetable)>>8)
+        BYTE(LOADADDR(spritetable)>>16)
         . = 0x03;
         SHORT(LOADADDR(_init));
         SHORT(SIZEOF(_init));

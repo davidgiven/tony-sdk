@@ -20,7 +20,7 @@ while i < len(sys.argv):
         print("KEEP(")
     for f in files:
         base, ext = splitext(f)
-        print(f"*/{basename(base)}.o(.text)")
+        print(f"*/{basename(base)}.o(.text .rodata .data)")
     if chunkname.startswith("_"):
         print(")")
     print(f"}}")

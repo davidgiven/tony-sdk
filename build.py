@@ -1,4 +1,4 @@
-from build.ab import export, simplerule, filenamesof
+from build.ab import export, simplerule, filenamesof, filenameof
 from build.llvm import llvmrawprogram, llvmclibrary
 from build.c import hostcxxprogram
 from build.pkg import package
@@ -7,14 +7,31 @@ from build.pkg import package
 def tonyprogram(
     name,
     chunks={},
+    sprites={},
     deps=[],
     cflags=[],
     ldflags=[],
 ):
     args = []
+    targets = []
     for k, v in chunks.items():
         args += [k + ":"]
         args += filenamesof(v)
+        targets += v
+    for k, v in sprites.items():
+        r = simplerule(
+            name=f"{name}_sprite_{k}",
+            ins=[v],
+            outs=[f"={name}.o"],
+            commands=[
+                "$(LD6502) -m moself -r -b binary $[ins[0]] -o $[outs[0]]"
+            ],
+            label="SPRITE",
+        )
+        r.materialise()
+
+        args += [k + ":", filenameof(r)]
+        targets += [r]
 
     simplerule(
         name=name + "_chunkfile",
@@ -26,7 +43,7 @@ def tonyprogram(
 
     llvmrawprogram(
         name=name,
-        srcs=[inner for outer in chunks.values() for inner in outer],
+        srcs=targets,
         deps=[f".+{name}_chunkfile", ".+tony_lib"] + deps,
         cflags=cflags + ["-mcpu=mosw65c02"],
         ldflags=ldflags + ["--no-check-sections", "-e0", "-L$[deps[0].dir]"],
@@ -36,6 +53,12 @@ def tonyprogram(
 
 package(name="libfmt", package="fmt")
 hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
+hostcxxprogram(
+    name="despriter",
+    srcs=["tools/despriter.cc"],
+    deps=[".+libfmt"],
+    ldflags=["-lX11"],
+)
 
 llvmclibrary(
     name="tony_lib",
@@ -49,6 +72,7 @@ tonyprogram(
         "_main": ["src/_main.S"],
         "_vwrite": ["src/_vwrite.S"],
         "_font": ["src/_font.S"],
+        "spritetable": ["src/spritetable.S"],
         "init_screen_009106": ["src/init_screen_009106.S"],
         "init_screen_313021": ["src/init_screen_313021.S"],
         "init_screen_333023": ["src/init_screen_333023.S"],
@@ -56,6 +80,7 @@ tonyprogram(
         "init_screen_other": ["src/init_screen_other.S"],
         "init_other": ["src/init_other.S"],
     },
+    sprites={"sprite_00": ["out.bin"]},
 )
 
 export(
@@ -63,5 +88,6 @@ export(
     items={
         "tony.img": ".+romimage",
         "bin/dechunker": ".+dechunker",
+        "bin/despriter": ".+despriter",
     },
 )
