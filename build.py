@@ -24,8 +24,10 @@ def tonyprogram(
             name=f"{name}_sprite_{k}",
             ins=[v],
             outs=[f"={name}.o"],
+            deps=[".+spritify"],
             commands=[
-                "$(LD6502) -m moself -r -b binary $[ins[0]] -o $[outs[0]]"
+                "$[deps[0]] $[ins[0]] $[dir]/temp.bin",
+                "$(LD6502) -m moself -r -b binary $[dir]/temp.bin -o $[outs[0]]"
             ],
             label="SPRITE",
         )
@@ -63,10 +65,17 @@ hostclibrary(
 
 package(name="libfmt", package="fmt")
 hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
-hostcxxprogram(name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"])
+hostcxxprogram(
+    name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"]
+)
 hostcxxprogram(
     name="despriter",
     srcs=["tools/despriter.cc", "include/palette.h"],
+    deps=[".+libfmt", ".+libstb"],
+)
+hostcxxprogram(
+    name="spritify",
+    srcs=["tools/spritify.cc", "include/palette.h"],
     deps=[".+libfmt", ".+libstb"],
 )
 
@@ -90,7 +99,7 @@ tonyprogram(
         "init_screen_other": ["src/init_screen_other.S"],
         "init_other": ["src/init_other.S"],
     },
-    sprites={"sprite_00": ["out.bin"]},
+    sprites={"sprite_00": ["frames/00100.png"]},
 )
 
 export(
@@ -100,5 +109,6 @@ export(
         "bin/dechunker": ".+dechunker",
         "bin/despriter": ".+despriter",
         "bin/extractpalette": ".+extractpalette",
+        "bin/spritify": ".+spritify",
     },
 )

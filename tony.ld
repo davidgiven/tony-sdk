@@ -1,5 +1,5 @@
 MEMORY {
-    ram (rw) : ORIGIN = 0x300, LENGTH = 0x800
+    ram (rw) : ORIGIN = 0x300, LENGTH = 0x1000
     image (rw) : ORIGIN = 0, LENGTH = 0x10000
 }
 
