@@ -126,7 +126,10 @@ int main(int argc, const char** argv)
             uint8_t g = *data++;
             uint8_t b = *data++;
             uint8_t a = *data++;
-            emit(find_closest_colour(r, g, b));
+            if (a > 128)
+                emit(find_closest_colour(r, g, b));
+            else
+                emit(0xff);
         }
 
         flush();
