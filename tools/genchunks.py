@@ -1,6 +1,7 @@
 import sys
 from os.path import *
 
+chunks = {}
 i=1
 while i < len(sys.argv):
     arg = sys.argv[i]
@@ -14,6 +15,11 @@ while i < len(sys.argv):
     while (i < len(sys.argv)) and not sys.argv[i].endswith(":"):
         files += [sys.argv[i]]
         i += 1
+    chunks[chunkname] = files
+
+sortedchunks = sorted(chunks.keys())
+for chunkname in sortedchunks:
+    files = chunks[chunkname]
 
     print(f"{chunkname} 0x0300 : AT(n) {{")
     if chunkname.startswith("_"):
