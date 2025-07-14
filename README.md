@@ -11,7 +11,7 @@ Each one is referred to by a descriptor structure:
 The actual flash header is structured like this:
 
 ```
-0000+3  24-bit flash address of default sprite table
+0000+3  24-bit flash address of default resource table
 0003+4  16-bit flash descriptor of initialisation routine
 0007+2  16-bit flash address of default font
           1bpp, 8x16 wide array of scanlines (i.e. standard font format)
@@ -26,17 +26,17 @@ The actual flash header is structured like this:
 0023+4  magic string 'tony'
 ```
 
-Sprite tables are an array of 24-bit flash addresses. Each entry points at a
-structure:
+Resource tables are an array of 24-bit flash addresses. Each entry points at a
+structure of various different kinds. So far I've figured out sprites:
 
 ```
 +0  sprite width
 +1  flags
 +2  sprite height
-+   compressed data
++   scanlines
 ```
 
-I don't know how the compressed data works yet.
+See `tools/spritify.cc` for how the compressed data works.
 
 ## Memory map
 
@@ -119,7 +119,9 @@ I don't know how the compressed data works yet.
                 p0, p1: (X, Y) position
                 p3p2: sprite index
                 p4: flags
-                p5: more flags?
+                p5: more flags
+                  0x00 draws a silhouette
+                  0xff draws a normal sprite
               0x0a: clear display list and then add sprite
                 as for 0x08
               0x0c: reset display list to solid colour

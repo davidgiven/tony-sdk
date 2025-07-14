@@ -72,8 +72,6 @@ entry:
 	lda GPIO1
 	eor #0xff
 	jsr hex8
-	jsr space
-
 	rts
 
 hex8:

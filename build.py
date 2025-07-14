@@ -9,12 +9,12 @@ from glob import glob
 def tonyprogram(
     name,
     chunks={},
-    sprites={},
+    resources={},
     deps=[],
     cflags=[],
     ldflags=[],
 ):
-    allresources = " ".join(sprites.keys())
+    allresources = " ".join(resources.keys())
     r = simplerule(
         name=name + "_rsrc",
         ins=["tools/genresources.py"],
@@ -30,7 +30,7 @@ def tonyprogram(
         args += [k + ":"]
         args += filenamesof(v)
         targets += v
-    for k, v in sprites.items():
+    for k, v in resources.items():
         r = simplerule(
             name=f"{name}_sprite_{k}",
             ins=[v],
@@ -80,8 +80,8 @@ hostcxxprogram(
     name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"]
 )
 hostcxxprogram(
-    name="despriter",
-    srcs=["tools/despriter.cc", "include/palette.h"],
+    name="deresourcer",
+    srcs=["tools/deresourcer.cc", "include/palette.h"],
     deps=[".+libfmt", ".+libstb"],
 )
 hostcxxprogram(
@@ -109,7 +109,7 @@ tonyprogram(
         "init_screen_other": ["src/init_screen_other.S"],
         "init_other": ["src/init_other.S"],
     },
-    sprites={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
+    resources={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
 )
 
 export(
@@ -117,7 +117,7 @@ export(
     items={
         "tony.img": ".+romimage",
         "bin/dechunker": ".+dechunker",
-        "bin/despriter": ".+despriter",
+        "bin/deresourcer": ".+deresourcer",
         "bin/extractpalette": ".+extractpalette",
         "bin/spritify": ".+spritify",
     },
