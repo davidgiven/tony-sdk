@@ -5,15 +5,33 @@ from build.pkg import package
 from build.utils import stripext
 from glob import glob
 
+hostclibrary(
+    name="libstb",
+    srcs=["third_party/stb/stb_image.c", "third_party/stb/stb_image_write.c"],
+    hdrs={
+        "stb_image.h": "third_party/stb/stb_image.h",
+        "stb_image_write.h": "third_party/stb/stb_image_write.h",
+    },
+)
 
-def tonyprogram(
-    name,
-    chunks={},
-    resources={},
-    deps=[],
-    cflags=[],
-    ldflags=[],
-):
+package(name="libfmt", package="fmt")
+hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
+hostcxxprogram(
+    name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"]
+)
+hostcxxprogram(
+    name="deresourcer",
+    srcs=["tools/deresourcer.cc", "include/palette.h"],
+    deps=[".+libfmt", ".+libstb"],
+)
+hostcxxprogram(
+    name="spritify",
+    srcs=["tools/spritify.cc", "include/palette.h"],
+    deps=[".+libfmt", ".+libstb"],
+)
+
+
+def tonyprogram(name, chunks={}, resources={}, deps=[], cflags=[], ldflags=[]):
     allresources = " ".join(resources.keys())
     r = simplerule(
         name=name + "_rsrc",
@@ -65,38 +83,17 @@ def tonyprogram(
     )
 
 
-hostclibrary(
-    name="libstb",
-    srcs=["third_party/stb/stb_image.c", "third_party/stb/stb_image_write.c"],
-    hdrs={
-        "stb_image.h": "third_party/stb/stb_image.h",
-        "stb_image_write.h": "third_party/stb/stb_image_write.h",
-    },
-)
-
-package(name="libfmt", package="fmt")
-hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
-hostcxxprogram(
-    name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"]
-)
-hostcxxprogram(
-    name="deresourcer",
-    srcs=["tools/deresourcer.cc", "include/palette.h"],
-    deps=[".+libfmt", ".+libstb"],
-)
-hostcxxprogram(
-    name="spritify",
-    srcs=["tools/spritify.cc", "include/palette.h"],
-    deps=[".+libfmt", ".+libstb"],
-)
-
 llvmclibrary(
     name="tony_lib",
     hdrs={"tony.inc": "./include/tony.inc", "zif.inc": "./include/zif.inc"},
 )
 
+# This is the rule which needs changing to actually write code.
+
 tonyprogram(
     name="romimage",
+    # Each item here produces a single chunk. Each one can be made from multiple
+    # source files.
     chunks={
         "_init": ["src/_init.S"],
         "_main": ["src/_main.S"],
@@ -109,6 +106,7 @@ tonyprogram(
         "init_screen_other": ["src/init_screen_other.S"],
         "init_other": ["src/init_other.S"],
     },
+    # This compiles all the files in the rsrc directory as resources.
     resources={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
 )
 

@@ -1,4 +1,56 @@
-## Flash structure
+An SDK for the tony games console
+=================================
+
+## What?
+
+This is a rather hacked together and preliminary SDK for the WDT65c02-based tony
+games console (which you are unlikely to have heard of). The tony has 2kB of
+RAM, 8kB of fast ROM containing graphics and sound routines. It runs at 8MHz and
+has a hardware-accelerated 24MHz link to a SPI flash chip for storage.
+
+The display is handled via a 160x128 ST7735 screen, with another fast link, and
+the sound is done on-chip and appears to have 3(?) channels.
+
+## How?
+
+You will need the `llvm-mos` toolchain. There's no C here, but I am using the
+`llvm-mos` assembler and linker for putting together the ROMs.  Once you have
+all the poorly documented dependencies, doing `make` will built the tools and a
+demo ROM. You can then just flash this.
+
+## Device documentation
+
+This is all super preliminary.
+
+### Principles
+
+The built-in OS is weird. There's only 2kB of RAM, and code has to execute out
+of RAM, so the OS will copy data into RAM from flash and execute it there on
+demand.  This means that your program has to be divided into chunks, each of
+which executes at 0x0300. 
+
+There are OS calls to jump to a different chunk (CHUNKJUMP) and to call a
+different chunk (CHUNKCALL). The chunk stack is four levels deep. Parameters get
+passed around in zero page scratch space, a special OS parameter area, or in
+application memory (depending on what you're doing).
+
+### Graphics
+
+There's not enough RAM for a framebuffer so instead the OS uses a display list
+system. You can have up to 80 sprites on the display list, and then this is
+computed and rendered out to the screen for every scanline. Sprite data is
+fetched directly from flash on demand. It's much faster than it sounds. The sprites
+are RLE encoded in flash for, I think, performance reasons rather than size.
+
+Internally it uses 8bpp graphics with a fixed palette, even though the ST7735
+supports 16-bit graphics. Colour index 0xff represents transparency. This means
+you can't have true white in a sprite.
+
+### Sound
+
+Unknown. Some kind of FM synthesis polyphonic thing.
+
+### Flash structure
 
 The first 64kB of flash is special, and must contain three special routines.
 Each one is referred to by a descriptor structure:
@@ -17,6 +69,10 @@ The actual flash header is structured like this:
           1bpp, 8x16 wide array of scanlines (i.e. standard font format)
           starting with character 0x20
 0009+6  encryption 'key' (leave zeroed); unencoded in flash
+          This produces a simple XOR value via the formula:
+            ((b0 - b1 | b2) ^ b3) + b4 & b5
+          But given it's one byte long, never changes, and there's a magic fixed
+          string at 0023, it's easier to get it from there...
 000f+4  first four bytes of key; stored normally (leave zeroed)
 0013+4  16-bit flash descriptor of video memory write routine
 0019+2  ??? stored in 01a3
@@ -38,7 +94,7 @@ structure of various different kinds. So far I've figured out sprites:
 
 See `tools/spritify.cc` for how the compressed data works.
 
-## Memory map
+### Memory map
 
 ```
 0000+80     I/O area
@@ -75,16 +131,26 @@ See `tools/spritify.cc` for how the compressed data works.
               bit 2: initialise to background colour
               bit 3: initialise to video
     008d+4  destination buffer for the flash routines (o0, i1, i2...)
+    0093    event flags?
     0094+3  24-bit flash address of current sprite table
     0097    screen width
     0098    screen height
     0099    flash encryption key (just a value which is XORd with each byte...)
+  0100-01de OS storage
     0100+?  input/output parameters for screen routines, plus scratch space?
     017f    top of CPU stack
     0180    shadow copy of write-only I/O register 01
     018e    chunk stack pointer
     018f+20 chunk stack (enough space for four nested chunk calls)
+    01a5+9*3 sound channel data
+      for each channel:
+        +0..2 flash address of audio data
+        +4..7 data currently being played back
+    01c0    user interrupt flag
+              bit 7: clear to enable user interrupts
     01db    shadow copy of write-only I/O register 00
+  01df-02ff application storage
+    01df    user interrupt entrypoint (if enabled)
   0300+???? chunk execution buffer
   0489+3    24-bit flash address of video playback table
   048d+80   scanline buffer 1
@@ -145,9 +211,11 @@ See `tools/spritify.cc` for how the compressed data works.
                 p3: foreground colour
                 p4: background colour
   6003      READFLASH: reads four bytes of flash
+              This takes about 50µs to execute and reads four bytes.
               i2i1i0: source address
               o0..o3: result data
   6052      CHUNKJUMP: transfer control to a chunk
+              Downloading a chunk from flash happens at about 5µs/byte.
               i2i1i0: flash address of chunk
               i4i3: length of chunk
   60de      CHUNKCALL: nested call to a chunk
@@ -156,6 +224,13 @@ See `tools/spritify.cc` for how the compressed data works.
 8000        LCD w/o command register
 c000        LCD r/w data register
 ffda        extended interrupt table (actually a mirror of its real location in 7fda)
+  ffee      sets the top bit of 93 --- vsync?
+  fff0      general interrupt vector
+  fff2,4,6  audio interrupts?
+  fff8      user interrupt vector
+  fffa      6502 NMI vector (just goes to an RTI)
+  fffc      reset vector
+  fffe      6502 IRQ vector (just goes to an RTI)
 ```
 
 LICENSE
