@@ -11,6 +11,10 @@ has a hardware-accelerated 24MHz link to a SPI flash chip for storage.
 The display is handled via a 160x128 ST7735 screen, with another fast link, and
 the sound is done on-chip and appears to have 3(?) channels.
 
+I did a video on reverse engineering this!
+
+[![Video from my Youtube channel](https://img.youtube.com/vi/jJ0XmZvR4bU/0.jpg)](https://www.youtube.com/watch?v=jJ0XmZvR4bU)
+
 ## How?
 
 You will need the `llvm-mos` toolchain. There's no C here, but I am using the
