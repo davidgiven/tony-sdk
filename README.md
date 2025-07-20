@@ -26,13 +26,16 @@ This is all super preliminary.
 
 The built-in OS is weird. There's only 2kB of RAM, and code has to execute out
 of RAM, so the OS will copy data into RAM from flash and execute it there on
-demand.  This means that your program has to be divided into chunks, each of
+demand. This means that your program has to be divided into chunks, each of
 which executes at 0x0300. 
 
 There are OS calls to jump to a different chunk (CHUNKJUMP) and to call a
 different chunk (CHUNKCALL). The chunk stack is four levels deep. Parameters get
 passed around in zero page scratch space, a special OS parameter area, or in
 application memory (depending on what you're doing).
+
+The application gets 289 bytes of persistent RAM from 0x1df to 0x2ff; it also
+gets 80 bytes of zero page from 0xb0 to 0xff. 
 
 ### Graphics
 
@@ -94,6 +97,11 @@ structure of various different kinds. So far I've figured out sprites:
 
 See `tools/spritify.cc` for how the compressed data works.
 
+The ROM seems to support two ways of accessing the flash, both via SPI,
+controlled via bit 6 of 0x009a. Primary SPI (bit enabled) is the normal flash
+chip. Secondary SPI (bit disabled) works identically but uses a different CS
+pin. I don't know what this refers to yet.
+
 ### Memory map
 
 ```
@@ -101,6 +109,7 @@ See `tools/spritify.cc` for how the compressed data works.
   0000      GPIOs
               Seem to be multiple peripherals here; you need to configure
               something before the buttons are readable.
+              output bit 0: secondary SPI CS enable?
               input bit 1: UP
               input bit 2: LEFT
               input bit 3: RIGHT
@@ -120,9 +129,11 @@ See `tools/spritify.cc` for how the compressed data works.
   0011      SPI r/w register, low byte
   0013      SPI status register
   0035      something to do with LCD control
-  0058+2    DMA source address
-  005a+2    DMA dest address
+  0058+2    DMA source/dest address
+  005a+2    DMA transfer flags?
   005c+2    DMA length
+  005e      DMA address select; if 0, 0058 sets source address; if 1, 0058 sets destination
+  005f      more DMA transfer flags
 0080-07ff   RAM
   0080+80   ZP RAM
     0080+8  input parameters for the flash routines (i0, i1, i2...)
@@ -136,6 +147,9 @@ See `tools/spritify.cc` for how the compressed data works.
     0097    screen width
     0098    screen height
     0099    flash encryption key (just a value which is XORd with each byte...)
+    009a    flags
+               bit 6: enables primary SPI vs secondary SPI (which is unknown)
+    b0-ff   application storage
   0100-01de OS storage
     0100+?  input/output parameters for screen routines, plus scratch space?
     017f    top of CPU stack
@@ -153,19 +167,19 @@ See `tools/spritify.cc` for how the compressed data works.
     01df    user interrupt entrypoint (if enabled)
   0300+???? chunk execution buffer
   0489+3    24-bit flash address of video playback table
-  048d+80   scanline buffer 1
+  048d+80   display list item draw flags (p5 parameter)
   04dd+80   display list item X ordinate
-  052d+80   scanline buffer 3
+  052d+80   display list item draw flags (p4 parameter)
   057d+80   display list item Y ordinate
   05cd+80   display list item flash address byte 0
   061d+80   display list item flash address byte 1
   066d+80   display list item flash address byte 2
-  06bd+80   scanline buffer 8
+  06bd+80   display list item draw flags (flag byte from resource)
   070d+80   display list item types
   075d      display list bottom scanline
   075e      display list top scanline
   075f      display list background colour
-  0760      pixel data buffer
+  0760-7ff  pixel data buffer
 6000+1fff   ROM
   6000      SYSCALL: graphics library entrypoint
               opcode in X; parameters in 0100...

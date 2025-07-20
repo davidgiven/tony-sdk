@@ -92,8 +92,8 @@ llvmclibrary(
 
 tonyprogram(
     name="romimage",
-    # Each item here produces a single chunk. Each one can be made from multiple
-    # source files.
+    # Each item here produces a single chunk. Each one can be made from
+    # multiple source files.
     chunks={
         "_init": ["src/_init.S"],
         "_main": ["src/_main.S"],
@@ -107,7 +107,8 @@ tonyprogram(
         "init_other": ["src/init_other.S"],
     },
     # This compiles all the files in the rsrc directory as resources.
-    resources={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
+    resources={
+        stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
 )
 
 export(
