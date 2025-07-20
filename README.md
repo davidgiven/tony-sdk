@@ -22,6 +22,29 @@ You will need the `llvm-mos` toolchain. There's no C here, but I am using the
 all the poorly documented dependencies, doing `make` will built the tools and a
 demo ROM. You can then just flash this.
 
+## Tooling
+
+There are a number of tools in the `tools` directory, which will get built into
+binaries in `bin`.
+
+  - `dechunker`: analyses a tony flash image and attempts to find all the chunks
+  therein. It does this by looking for the fixed code sequences which both the
+  original flash image and SDK images use for calling chunks. This means it'll
+  miss any chunks which are called in any other way. It will also generate a
+  `.dot` file containing the call graph, as it knows it, which can by compiled
+  with `dotty` into an SVG file.
+
+  - `deresourcer`: analyses a tony flash image and extracts all the resources in the
+  default resource table. Currently it only supports sprite resources, which get
+  emitted as PNGs. Any other resource type will produce a garbage image.
+
+  - `extractpalette`: analyses a tony mask ROM and extracts the 8-bit palette as
+  a C include file.
+
+  - `spritify`: converts an image into a tony sprite resource. The build system
+  uses this when compiling resources. Each pixel in the source image will be
+  looked up in the palette and the nearest colour found.
+
 ## Device documentation
 
 This is all super preliminary.
