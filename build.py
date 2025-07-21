@@ -19,6 +19,7 @@ hostcxxprogram(name="dechunker", srcs=["tools/dechunker.cc"], deps=[".+libfmt"])
 hostcxxprogram(
     name="extractpalette", srcs=["tools/extractpalette.cc"], deps=[".+libfmt"]
 )
+hostcxxprogram(name="decrypt", srcs=["tools/decrypt.cc"], deps=[".+libfmt"])
 hostcxxprogram(
     name="deresourcer",
     srcs=["tools/deresourcer.cc", "include/palette.h"],
@@ -107,8 +108,7 @@ tonyprogram(
         "init_other": ["src/init_other.S"],
     },
     # This compiles all the files in the rsrc directory as resources.
-    resources={
-        stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
+    resources={stripext(f): f"rsrc/{f}" for f in glob("*", root_dir="rsrc")},
 )
 
 export(
@@ -119,5 +119,6 @@ export(
         "bin/deresourcer": ".+deresourcer",
         "bin/extractpalette": ".+extractpalette",
         "bin/spritify": ".+spritify",
+        "bin/decrypt": ".+decrypt",
     },
 )

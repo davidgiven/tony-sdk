@@ -27,6 +27,9 @@ demo ROM. You can then just flash this.
 There are a number of tools in the `tools` directory, which will get built into
 binaries in `bin`.
 
+  - `decrypter`: analyses a tony flash image and removes the encryption from it.
+  The new flash image will work fine; it just won't have any encryption.
+
   - `dechunker`: analyses a tony flash image and attempts to find all the chunks
   therein. It does this by looking for the fixed code sequences which both the
   original flash image and SDK images use for calling chunks. This means it'll
