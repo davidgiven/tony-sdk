@@ -137,21 +137,29 @@ pin. I don't know what this refers to yet.
               Seem to be multiple peripherals here; you need to configure
               something before the buttons are readable.
               output bit 0: secondary SPI CS enable?
-              input bit 1: UP
-              input bit 2: LEFT
-              input bit 3: RIGHT
-              input bit 4: DOWN
-              input bit 5: START
-              input bit 6: VOLUME
-              input bit 7: A
+              i/o bit 1: UP
+              i/o bit 2: LEFT
+              i/o bit 3: RIGHT
+              i/o bit 4: DOWN
+              i/o bit 5: START
+              i/o bit 6: VOLUME
+              i/o bit 7: A
   0001      GPIOs
-              input bit 0: B
-              output bit 1: LCD backlight
+              i/o bit 0: B
+              output bit 1: LCD backlight via MOSFET
+              i/o bit 2: U2 pin 4
+              i/o bit 3: U2 pin 3
+              i/o bit 4: U2 pin 2
+              i/o bit 6: LCD reset line
   0002      GPIOs
               output bit 3: SPI CS line
   0008      GPDIR for GPIO0
+              set high for output
   0009      GPDIR for GPIO1
+              set high for output
   000a      GPDIR for GPIO2
+              set high for output
+              always set to 0b00001101
   0010      SPI r/w register, high byte
   0011      SPI r/w register, low byte
   0013      SPI status register
@@ -176,6 +184,7 @@ pin. I don't know what this refers to yet.
     0099    flash encryption key (just a value which is XORd with each byte...)
     009a    flags
                bit 6: enables primary SPI vs secondary SPI (which is unknown)
+    00a3    flags used by the sound system
     b0-ff   application storage
   0100-01de OS storage
     0100+?  input/output parameters for screen routines, plus scratch space?

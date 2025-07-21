@@ -9,6 +9,7 @@ SECTIONS {
     GPIO2 = 0x02;
     GPDIR0 = 0x08;
     GPDIR1 = 0x09;
+    GPDIR2 = 0x0a;
     LCD_CONTROL = 0x35;
 
     i0 = 0x80;
