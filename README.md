@@ -50,7 +50,10 @@ binaries in `bin`.
 
 ## Device documentation
 
-This is all super preliminary.
+This is all super preliminary. The chip is very likely related to the Game King
+CPU, documented at http://blog.kevtris.org/blogfiles/Game%20King%20Inside.txt;
+many peripherals seem similar, if moved and altered due to the tony running off
+SPI flash, while the Game King ran off NAND flash.
 
 ### Principles
 
@@ -154,6 +157,7 @@ pin. I don't know what this refers to yet.
               i/o bit 3: U2 pin 3
               i/o bit 4: U2 pin 2
               i/o bit 6: LCD reset line
+              bit 7: something sound related?
   0002      GPIOs
               output bit 3: SPI CS line
   0008      GPDIR for GPIO0
@@ -166,7 +170,22 @@ pin. I don't know what this refers to yet.
   0010      SPI r/w register, high byte
   0011      SPI r/w register, low byte
   0013      SPI status register
-  0035      something to do with LCD control
+  0034      (possible, from GK) bank select for 8000-ffff
+  0035      (possible, from GK) CS select for 8000-ffff
+              The ROM sets this to 3 when accessing the LCD, and 0 otherwise.
+              According to the GK documentation, mode 3 will be either /CE 8 or
+              3.
+  003c      (possible, from GK) interrupt pending register
+              write 0 to clear 003e
+  003e      (possible, from GK) Interrupt enable register / interrupt pending register
+              bit 0: unknown
+              bit 1: square 2 / PWM timer
+              bit 2: timer controlled by reg 0023/0024/0025
+              bit 3: Timer controlled by reg 0026
+              bit 4: interrupt on IO change at port 0000
+              bit 5: timer 0 interrupt / one shot
+              bit 6: unknown
+              bit 7: unknown
   0058+2    DMA source/dest address
   005a+2    DMA transfer flags?
   005c+2    DMA length
@@ -277,6 +296,7 @@ pin. I don't know what this refers to yet.
 8000        LCD w/o command register
 c000        LCD r/w data register
 ffda        extended interrupt table (actually a mirror of its real location in 7fda)
+  ff
   ffee      sets the top bit of 93 --- vsync?
   fff0      general interrupt vector
   fff2,4,6  audio interrupts?
